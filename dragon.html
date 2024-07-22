@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Dragon with Fire</title>
+    <style>
+        body { margin: 0; }
+        canvas { display: block; }
+    </style>
+</head>
+<body>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script id="vertexShader" type="x-shader/x-vertex">
+        varying vec2 vUv;
+        void main() {
+            vUv = uv;
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }
+    </script>
+    <script id="fragmentShader" type="x-shader/x-fragment">
+        uniform float time;
+        varying vec2 vUv;
+        void main() {
+            vec2 p = vUv;
+            float brightness = sin(p.x * 10.0 + time) * sin(p.y * 10.0 + time);
+            vec3 color = vec3(1.0, brightness, 0.0);
+            gl_FragColor = vec4(color, 1.0);
+        }
+    </script>
+    <script>
+        // Set up the scene, camera, and renderer
+        console.log("Initializing scene...");
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        // Add orbit controls
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+
+        // Add a light source
+        console.log("Adding light...");
+        const light = new THREE.DirectionalLight(0xffffff, 1);
+        light.position.set(5, 10, 7.5);
+        scene.add(light);
+
+        // Use a proxy to bypass CORS
+        const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
+        const targetUrl = 'https://drive.google.com/uc?id=191Y73ntAObBEbWfH5BkFhF0gk5M6GoQA';
+        const url = proxyUrl + targetUrl;
+
+        // Load the dragon model
+        console.log("Loading model...");
+        const loader = new THREE.GLTFLoader();
+        loader.load(url, function(gltf) {
+            console.log("Model loaded successfully");
+            const dragon = gltf.scene;
+            scene.add(dragon);
+            animate();
+        }, undefined, function(error) {
+            console.error("Error loading model:", error);
+        });
+
+        // Add the fire effect
+        const fireMaterial = new THREE.ShaderMaterial({
+            vertexShader: document.getElementById('vertexShader').textContent,
+            fragmentShader: document.getElementById('fragmentShader').textContent,
+            uniforms: {
+                time: { value: 0.0 }
+            }
+        });
+
+        const fireGeometry = new THREE.PlaneBufferGeometry(1, 2);
+        const fireMesh = new THREE.Mesh(fireGeometry, fireMaterial);
+        fireMesh.position.set(0, 0, -2);
+        scene.add(fireMesh);
+
+        // Animate the scene
+        function animate() {
+            requestAnimationFrame(animate);
+            fireMaterial.uniforms.time.value += 0.05;
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        // Set the camera position
+        camera.position.set(0, 5, 10);
+        controls.update();
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        console.log("Initialization complete.");
+    </script>
+</body>
+</html>
