@@ -48,15 +48,10 @@
         light.position.set(5, 10, 7.5);
         scene.add(light);
 
-        // Use a proxy to bypass CORS
-        const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
-        const targetUrl = 'https://drive.google.com/uc?id=191Y73ntAObBEbWfH5BkFhF0gk5M6GoQA';
-        const url = proxyUrl + targetUrl;
-
         // Load the dragon model
         console.log("Loading model...");
         const loader = new THREE.GLTFLoader();
-        loader.load(url, function(gltf) {
+        loader.load('https://emalnuel.github.io/Dragon/scene.gltf', function(gltf) {
             console.log("Model loaded successfully");
             const dragon = gltf.scene;
             scene.add(dragon);
